@@ -1,0 +1,2 @@
+# SmartTelegraphs
+Wildstar addon
