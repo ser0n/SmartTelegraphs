@@ -485,6 +485,10 @@ function SmartTelegraphs:OnCheckColorTab( wndHandler, wndControl, eMouseButton )
 	self:ShowTab(2);
 end
 
+function SmartTelegraphs:OnCheckSettingsTab( wndHandler, wndControl, eMouseButton )
+	self:ShowTab(3);
+end
+
 function SmartTelegraphs:ShowTab(nTab)
 	if nTab < 1 or nTab > 2 then return end
 	
@@ -492,7 +496,7 @@ function SmartTelegraphs:ShowTab(nTab)
 	self.main.zoneTab:SetCheck(nTab == 1)
 	self.main.colorConfigArea:Show(nTab == 2, true)
 	self.main.colorTab:SetCheck(nTab == 2)
-	
+
 	if nTab == 1 then
 		self:UpdateZoneConfigArea()
 		self:UpdateZoneList()		
