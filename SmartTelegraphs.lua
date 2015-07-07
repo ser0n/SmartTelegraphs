@@ -107,11 +107,6 @@ function SmartTelegraphs:OnDocLoaded()
 			return
 			]]--
 		end
-
-		if self.wndFloat == nil then
-			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
-			return
-		end
 		
 	  	self.wndMain:Show(false, true)
 		self.wndFloat:Show(true, true)
