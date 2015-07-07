@@ -34,6 +34,7 @@ function SmartTelegraphs:new(o)
 	}
 
 	self.config.lastTab = 1
+	self.config.showSmallFloat = false
 	self.config.defaultColor = {
 			colorName = "CRB_RED",
 			r = 255,
@@ -120,9 +121,8 @@ function SmartTelegraphs:OnDocLoaded()
 			end
 		end
 
-		----------------
-		---   MAIN   ---
-		----------------
+		
+		--- Main window ---
 		self.main.zoneConfigArea = self.wndMain:FindChild("ZoneConfigArea")
 		self.main.zoneTab = self.wndMain:FindChild("btnZoneTab")
 		self.main.colorConfigArea = self.wndMain:FindChild("ColorsConfigArea")
@@ -141,14 +141,15 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.IFEditBox = self.wndMain:FindChild("IFEditBox")
 		self.main.OFEditBox = self.wndMain:FindChild("OFEditBox")
 
-		-----------------
-		---   FLOAT   ---
-		-----------------
+		--- Floater ---
 		self.float.presetList = self.wndFloat:FindChild("wndPresetList")
 		self.float.presetList:Show(false, true)
 		self.float.txtZone = self.wndFloat:FindChild("wndPresetZoneText")
 		self.float.txtSubzone = self.wndFloat:FindChild("wndPresetSubzoneText")
 		self.float.colorDisplay = self.wndFloat:FindChild("wndPresetColorDisplay")
+
+		--- Small floater ---
+		self.smallFloat.colorDisplay = nil
 
 		self:UpdateUI()
 	end
@@ -262,7 +263,6 @@ function SmartTelegraphs:UpdateColorConfigArea()
 	local zone = self:GetZone(tZoneId)
 	local color = self:GetColor(zone.colorId)
 
-
 	self.main.colorName:SetText(color.colorName)
 
 	self.main.REditBox:SetText(color.r)
@@ -275,12 +275,15 @@ function SmartTelegraphs:UpdateColorConfigArea()
 end
 
 function SmartTelegraphs:UpdateFloaterWindow(zone)
-	self.float.txtZone:SetText(zone.zoneName)
-	self.float.txtSubzone:SetText("") -- zone.subzoneName
-
 	local color = self:GetColor(zone.colorId)
 
-	self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
+	if not self.config.showSmallFloat then
+		self.float.txtZone:SetText(zone.zoneName)
+		self.float.txtSubzone:SetText("") -- zone.subzoneName
+		self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
+	else
+		self.smallFloat.colorDisplay:SetBGColor(self:CreateCColor(color))
+	end
 end
 
 
