@@ -56,11 +56,11 @@ function SmartTelegraphs:new(o)
 
 	self.updateZoneId = nil
 	
-	self.rtname = "spell.custom1EnemyNPCDetrimentalTelegraphColorR"
-	self.gtname = "spell.custom1EnemyNPCDetrimentalTelegraphColorG"
-	self.btname = "spell.custom1EnemyNPCDetrimentalTelegraphColorB"
-	self.fotname = "spell.fillOpacityCustom1_34"
-	self.ootname = "spell.outlineOpacityCustom1_34"
+	self.config.rtname = "spell.custom1EnemyNPCDetrimentalTelegraphColorR"
+	self.config.gtname = "spell.custom1EnemyNPCDetrimentalTelegraphColorG"
+	self.config.btname = "spell.custom1EnemyNPCDetrimentalTelegraphColorB"
+	self.config.fotname = "spell.fillOpacityCustom1_34"
+	self.config.ootname = "spell.outlineOpacityCustom1_34"
 
     return o
 end
@@ -101,7 +101,7 @@ function SmartTelegraphs:OnDocLoaded()
 			return
 		end
 		
-	  self.wndMain:Show(false, true)
+	  	self.wndMain:Show(false, true)
 		self.wndFloat:Show(true, true)
 
 		-- Register handlers for events, slash commands and timer, etc.
@@ -230,11 +230,11 @@ function SmartTelegraphs:SetTelegraphColors(colorId)
 	local color = self:GetColor(colorId)
 	
 	Apollo.SetConsoleVariable("spell.telegraphColorSet", 4)
-	Apollo.SetConsoleVariable(self.rtname, color.r)
-	Apollo.SetConsoleVariable(self.gtname, color.g)
-	Apollo.SetConsoleVariable(self.btname, color.b)
-	Apollo.SetConsoleVariable(self.fotname, color.fo)
-	Apollo.SetConsoleVariable(self.ootname, color.oo)
+	Apollo.SetConsoleVariable(self.config.rtname, color.r)
+	Apollo.SetConsoleVariable(self.config.gtname, color.g)
+	Apollo.SetConsoleVariable(self.config.btname, color.b)
+	Apollo.SetConsoleVariable(self.config.fotname, color.fo)
+	Apollo.SetConsoleVariable(self.config.ootname, color.oo)
 		
 	GameLib.RefreshCustomTelegraphColors()
 end
@@ -252,6 +252,7 @@ function SmartTelegraphs:UpdateZoneConfigArea()
 
 	--local color = self:GetColor("||")
 
+	-- Folder
 	self.main.zoneNameDisplay:SetText(tZoneName)
 	self.main.subZoneNameDisplay:SetText(tSubzoneName)
 end
@@ -275,7 +276,7 @@ end
 
 function SmartTelegraphs:UpdateFloaterWindow(zone)
 	self.float.txtZone:SetText(zone.zoneName)
-	self.float.txtSubzone:SetText("")--zone.subzoneName)
+	self.float.txtSubzone:SetText("") -- zone.subzoneName
 
 	local color = self:GetColor(zone.colorId)
 
@@ -303,7 +304,7 @@ function SmartTelegraphs:OnSave(eLevel)
 	self.config.mainWindowOffset = { self.wndMain:GetAnchorOffsets() }
 	self.config.floatWindowOffset = { self.wndFloat:GetAnchorOffsets() }
 
-	tData.config = self.config
+	tData.config = self:DeepCopy(self.config)
 	tData.data = self:DeepCopy(self.data)
 	
 	return tData 
@@ -318,17 +319,6 @@ function SmartTelegraphs:OnRestore(eLevel, tData)
 
 	if tData.data then
 		self.data = self:DeepCopy(tData.data)
-	else
-		tData.data = {
-			zones = {
-				{
-					zoneName = "Default",
-					subzoneName = "",
-					colorId = "255|0|0"
-				} 
-			},
-			colors = {}
-		}
 	end
 end
 
