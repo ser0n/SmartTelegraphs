@@ -25,14 +25,23 @@ function SmartTelegraphs:new(o)
 
     -- initialize variables here
 
-	self.config = {
-		version = {
-  		major = 0,
+	self.config = {}
+
+	self.config.version = {
+		major = 0,
   		minor = 1,
   		patch = 0
-		},
-		lastTab = 1
 	}
+
+	self.config.lastTab = 1
+	self.config.defaultColor = {
+			colorName = "CRB_RED",
+			r = 255,
+			g = 0,
+			b = 0,
+			fo = 100,
+			oo = 100
+		}
 
 	self.data = {
 		zones = {},
@@ -123,9 +132,6 @@ function SmartTelegraphs:OnDocLoaded()
 
 		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
 		self.main.subZoneNameDisplay = self.wndMain:FindChild("SubzoneNameDisplay")
-		self.main.colorDropDown = self.wndMain:FindChild("ColorDropDown")
-		self.main.colorDropDownList = self.wndMain:FindChild("ColorDropDownList")
-		self.main.colorDropDownList:Show(false, true)
 
 		self.main.colorName = self.wndMain:FindChild("ColorNameEditBox")
 		self.main.colorDisplay = self.wndMain:FindChild("ColorDisplay")
@@ -152,9 +158,23 @@ end
 -- SmartTelegraphs General Events
 -----------------------------------------------------------------------------------------------
 
---[[
-	Print(oVar .. " - " .. strNewZone)
-	]]--
+-- on SlashCommand "/st"
+function SmartTelegraphs:OnSmartTelegraphsOn()
+	if not self.wndMain:IsShown() then
+		self:UpdateUI()
+
+		if self.config.lastTab ~= nil and self.config.lastTab then
+			self:ShowTab(self.config.lastTab)
+		else
+			self:ShowTab(1)
+		end
+
+		self.wndMain:Invoke()
+	else
+		self.wndMain:Close()
+	end
+end
+
 -- oVar = ID, strNewZone = Name
 function SmartTelegraphs:OnChangeZoneName(oVar, strNewZone)
 	Apollo.SetConsoleVariable("spell.telegraphColorSet", 4)
@@ -175,23 +195,6 @@ function SmartTelegraphs:OnChangeZoneName(oVar, strNewZone)
 	Print("SubzoneId: " .. tZoneId .. " | SubzoneName: " .. tSubzoneName )
 	Print("ParentZoneId: " .. tZone.parentZoneId .. " | strFolder: " .. tZone.strFolder)
 	]]--
-end
-
--- on SlashCommand "/st"
-function SmartTelegraphs:OnSmartTelegraphsOn()
-	if not self.wndMain:IsShown() then
-		self:UpdateUI()
-
-		if self.config.lastTab ~= nil and self.config.lastTab then
-			self:ShowTab(self.config.lastTab)
-		else
-			self:ShowTab(1)
-		end
-
-		self.wndMain:Invoke()
-	else
-		self.wndMain:Close()
-	end
 end
 
 -----------------------------------------------------------------------------------------------
@@ -247,25 +250,27 @@ function SmartTelegraphs:UpdateZoneConfigArea()
 	local tZoneName = tZone.strName
 	local tSubzoneName = GetCurrentSubZoneName()
 
-	local color = self:GetColor("||")
+	--local color = self:GetColor("||")
 
 	self.main.zoneNameDisplay:SetText(tZoneName)
 	self.main.subZoneNameDisplay:SetText(tSubzoneName)
-	self.main.colorDropDown:SetText(color.colorName)
-
-	--[[
-	self:SetUiZone(tZoneId)
-	
-	Print("WorldId: " .. tWorldId)
-	Print("ContinentId: " .. tZoneName.continentId)
-	Print("ZoneId: " .. tZoneName.id .. " | ZoneName: "  .. tZoneName .strName)
-	Print("SubzoneId: " .. tZoneId .. " | SubzoneName: " .. tSubzoneName )
-	Print("ParentZoneId: " .. tZoneName.parentZoneId .. " | strFolder: " .. tZoneName.strFolder)
-	]]--
 end
 
 function SmartTelegraphs:UpdateColorConfigArea()
+	local tZoneId = GameLib.GetCurrentZoneId()
+	local zone = self:GetZone(tZoneId)
+	local color = self:GetColor(zone.colorId)
 
+
+	self.main.colorName:SetText(color.colorName)
+
+	self.main.REditBox:SetText(color.r)
+	self.main.GEditBox:SetText(color.g)
+	self.main.BEditBox:SetText(color.b)
+	self.main.IFEditBox:SetText(color.fo)
+	self.main.OFEditBox:SetText(color.oo)
+
+	self.main.colorDisplay:SetBGColor(self:CreateCColor(color))
 end
 
 function SmartTelegraphs:UpdateFloaterWindow(zone)
@@ -274,12 +279,7 @@ function SmartTelegraphs:UpdateFloaterWindow(zone)
 
 	local color = self:GetColor(zone.colorId)
 
-	self.float.colorDisplay:SetBGColor(
-		CColor.new(
-			color.r / 255.0, 
-			color.g / 255.0, 
-			color.b / 255.0, 
-			color.fo / 100.0))
+	self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
 end
 
 
@@ -338,6 +338,7 @@ function SmartTelegraphs:OnCloseButtonPressed( wndHandler, wndControl, eMouseBut
 	self.wndMain:Close()
 end
 
+-- TODO should probably do a wrapper function for getting color from ui
 function SmartTelegraphs:OnColorEditBoxChanged( wndHandler, wndControl, strText )
 	local value = tonumber(strText)
 	if value ~= nil then
@@ -353,9 +354,10 @@ function SmartTelegraphs:OnColorEditBoxChanged( wndHandler, wndControl, strText 
 	local r = tonumber(self.main.REditBox:GetText()) / 255.0
 	local g = tonumber(self.main.GEditBox:GetText()) / 255.0
 	local b = tonumber(self.main.BEditBox:GetText()) / 255.0
-	local a = tonumber(self.main.IFEditBox:GetText()) / 100.0
+	local fo = tonumber(self.main.IFEditBox:GetText()) / 100.0
+	local of = tonumber(self.main.OFEditBox:GetText()) / 100.0
 	
-	self.main.colorDisplay:SetBGColor(CColor.new(r, g, b, a))
+	self.main.colorDisplay:SetBGColor(CColor.new(r, g, b, fo))
 end
 
 function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strText )
@@ -369,6 +371,14 @@ function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strTex
 	else
 		wndControl:SetText(0)
 	end
+
+	local r = tonumber(self.main.REditBox:GetText()) / 255.0
+	local g = tonumber(self.main.GEditBox:GetText()) / 255.0
+	local b = tonumber(self.main.BEditBox:GetText()) / 255.0
+	local fo = tonumber(self.main.IFEditBox:GetText()) / 100.0
+	local of = tonumber(self.main.OFEditBox:GetText()) / 100.0
+	
+	self.main.colorDisplay:SetBGColor(CColor.new(r, g, b, fo))
 end
 
 function SmartTelegraphs:DrawZoneItem(zoneId)
@@ -391,7 +401,7 @@ function SmartTelegraphs:DrawZoneItem(zoneId)
 	txtColorName:SetText(color.colorName)
 
 	local colorDisplay = newZoneItem:FindChild("ColorDisplay")
-	colorDisplay:SetBGColor(CColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.fo / 100));
+	colorDisplay:SetBGColor(self:CreateCColor(color));
 
 	local removeButton = newZoneItem:FindChild("btnRemoveZone")
 
@@ -414,7 +424,7 @@ function SmartTelegraphs:DrawColorItem(colorId)
 	txtColorName:SetText(color.colorName)
 	
 	local colorDisplay = newColorItem:FindChild("ColorDisplay")
-	colorDisplay:SetBGColor(CColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.fo / 100));
+	colorDisplay:SetBGColor(self:CreateCColor(color));
 	
 	self.main.listArea:ArrangeChildrenVert()
 end
@@ -431,26 +441,9 @@ function SmartTelegraphs:DrawFloatListItem(colorId)
 	txtColorName:SetText(color.colorName)
 	
 	local colorDisplay = newColorItem:FindChild("ColorDisplay")
-	colorDisplay:SetBGColor(CColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.fo / 100));
+	colorDisplay:SetBGColor(self:CreateCColor(color));
 	
 	self.float.presetList:ArrangeChildrenVert()
-end
-
-function SmartTelegraphs:DrawColorDropDownItem(colorId)
-	local newColorItem = Apollo.LoadForm(self.xmlDoc,"ColorFloatItemTemplateFrame", self.main.colorDropDownList, self)	
-
-	local color = self:GetColor(colorId)
-
-	newColorItem:SetData(colorId)
-	newColorItem:SetName("color_" .. colorId)
-	
-	local txtColorName = newColorItem:FindChild("txtColorName")
-	txtColorName:SetText(color.colorName)
-	
-	local colorDisplay = newColorItem:FindChild("ColorDisplay")
-	colorDisplay:SetBGColor(CColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0, color.fo / 100));
-	
-	self.main.colorDropDownList:ArrangeChildrenVert()
 end
 
 function SmartTelegraphs:OnSaveColorButton( wndHandler, wndControl, eMouseButton )
@@ -524,14 +517,6 @@ function SmartTelegraphs:UpdateFloatList()
 	end
 end
 
-function SmartTelegraphs:UpdateColorDropDownList()
-	self.main.colorDropDownList:DestroyChildren()
-
-	for i, peCurrent in pairs(self.data.colors) do
-		self:DrawColorDropDownItem(i)
-	end
-end
-
 function SmartTelegraphs:OnSaveZoneButton( wndHandler, wndControl, eMouseButton )
 	local tZone = GameLib.GetCurrentZoneMap()
 
@@ -542,6 +527,41 @@ function SmartTelegraphs:OnSaveZoneButton( wndHandler, wndControl, eMouseButton 
 			}
 
 	self:UpdateZoneList()
+end
+
+---------------------------------------------------
+-- Floater Event Handling
+---------------------------------------------------
+
+function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
+	if wndControl ~= self.wndFloat then return end
+	
+	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
+		self:UpdateFloatList()
+		self.float.presetList:Show(true, true)
+	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
+		SmartTelegraphs:OnSmartTelegraphsOn()
+	end
+end
+
+function SmartTelegraphs:OnFloatListItemClick( wndHandler, wndControl, eMouseButton, nLastRelativeMouseX, nLastRelativeMouseY, bDoubleClick, bStopPropagation )
+	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
+		local colorId = wndControl:GetParent():GetData()
+
+		local tZone = GameLib.GetCurrentZoneMap()
+
+		local zone = {
+				zoneName = tZone.strName,
+				subzoneName = "",
+				colorId = colorId
+			}
+
+		self.data.zones[tZone.id] = zone
+
+		self:UpdateFloaterWindow(zone)
+		self:ShowTab(self.config.lastTab)
+		self:UpdateTelegraphs()
+	end
 end
 
 ---------------------------------------------------
@@ -591,70 +611,13 @@ function SmartTelegraphs:UpdateZone(zoneId)
 	self:SetUiZone(zoneId)
 end
 
----------------------------------------------------
--- ColorDropDown Event Handling
----------------------------------------------------
-
-function SmartTelegraphs:OnColorDropDownMouseEnter( wndHandler, wndControl, x, y )
-	if wndControl ~= self.main.colorDropDown then return end
-
-	self.main.colorDropDown:SetSprite("BK3:btnMetal_DropDownFlyBy")
-end
-
-function SmartTelegraphs:OnColorDropDownMouseExit( wndHandler, wndControl, x, y )
-	if wndControl ~= self.main.colorDropDown then return end
-
-	self.main.colorDropDown:SetSprite("BK3:btnMetal_DropDownNormal")
-end
-
-function SmartTelegraphs:OnColorDropDownClick( wndHandler, wndControl, eMouseButton )
-	if wndControl ~= self.main.colorDropDown then return end
-
-	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
-		self:UpdateColorDropDownList()
-		self.main.colorDropDownList:Show(true, true)
-		--self.main.colorDropDown:SetSprite("BK3:btnMetal_DropDownNormal")
-	end
-end
-
-function SmartTelegraphs:OnFloatListItemClick( wndHandler, wndControl, eMouseButton, nLastRelativeMouseX, nLastRelativeMouseY, bDoubleClick, bStopPropagation )
-	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
-		local colorId = wndControl:GetParent():GetData()
-
-		local tZone = GameLib.GetCurrentZoneMap()
-
-		local zone = {
-				zoneName = tZone.strName,
-				subzoneName = "",
-				colorId = colorId
-			}
-
-		self.data.zones[tZone.id] = zone
-
-		self:UpdateFloaterWindow(zone)
-		self:ShowTab(self.config.lastTab)
-		self:UpdateTelegraphs()
-	end
-end
-
----------------------------------------------------
--- DropUp Event Handling
----------------------------------------------------
-
-function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
-	if wndControl ~= self.wndFloat then return end
-	
-	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
-		self:UpdateFloatList()
-		self.float.presetList:Show(true, true)
-	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
-		--SmartTelegraphs:OnSmartTelegraphsOn()
-	end
-end
-
 -----------------------------------------------------------------------------------------------
 -- SmartTelegraphs Util
 -----------------------------------------------------------------------------------------------
+
+function SmartTelegraphs:SetDefaultColor(color)
+	self.config.defaultColor = color
+end
 
 function SmartTelegraphs:GetZone(zoneId)
 	local zone = self.data.zones[zoneId]
@@ -675,15 +638,19 @@ function SmartTelegraphs:GetColor(colorId)
 	local color = self.data.colors[colorId]
 
 	if color == nil then
-		color = {
-			colorName = "CRB_RED",
-			r = 255,
-			g = 0,
-			b = 0,
-			fo = 100,
-			oo = 100
-		}
+		color = self.config.defaultColor
 	end
+
+	return color
+end
+
+function SmartTelegraphs:CreateCColor(color)	
+	local color = CColor.new(
+				color.r / 255.0, 
+				color.g / 255.0, 
+				color.b / 255.0, 
+				color.fo / 100.0
+			)
 
 	return color
 end
