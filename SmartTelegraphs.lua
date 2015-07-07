@@ -91,19 +91,31 @@ end
 function SmartTelegraphs:OnDocLoaded()
 
 	if self.xmlDoc ~= nil and self.xmlDoc:IsLoaded() then
-    self.wndMain = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsForm", nil, self)
-    self.main = {}
+	    self.wndMain = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsForm", nil, self)
 		self.wndFloat = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloat", nil, self)
-		self.float = {}
-		
+		-- self.wndSmallFloat = Appolo.LoadForm(self.xmlDoc, "SmartTelegraphsSmallFloat", nil, self) TODO Create and fix this
 		
 		if self.wndMain == nil then
 			Apollo.AddAddonErrorText(self, "Could not load the main window for some reason.")
+			return
+		elseif self.wndFloat == nil then
+			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
+			return
+			--[[
+		elseif self.wndSmallFloat == nil then
+			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
+			return
+			]]--
+		end
+
+		if self.wndFloat == nil then
+			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
 			return
 		end
 		
 	  	self.wndMain:Show(false, true)
 		self.wndFloat:Show(true, true)
+		-- self.wndSmallFloat:Show(false, true)
 
 		-- Register handlers for events, slash commands and timer, etc.
 		-- e.g. Apollo.RegisterEventHandler("KeyDown", "OnKeyDown", self)
@@ -111,7 +123,7 @@ function SmartTelegraphs:OnDocLoaded()
 		--Apollo.RegisterEventHandler("VarChange_ZoneName", 		"OnChangeZoneName", self)
 		Apollo.RegisterEventHandler("SubZoneChanged", 			"OnChangeZoneName", self)
 
-		-- Do additional Addon initialization here
+		-- Check if offsets exist
 		if self.config ~= nil then
 			if self.config.mainWindowOffset and self.config.mainWindowOffset ~= nil then
 				self.wndMain:SetAnchorOffsets(unpack(self.config.mainWindowOffset))
@@ -119,10 +131,17 @@ function SmartTelegraphs:OnDocLoaded()
 			if self.config.floatWindowOffset and self.config.floatWindowOffset ~= nil then
 				self.wndFloat:SetAnchorOffsets(unpack(self.config.floatWindowOffset))
 			end
+			--[[
+			if self.config.smallFloatWindowOffset and self.config.smallFloatWindowOffset ~= nil then
+				self.wndFloat:SetAnchorOffsets(unpack(self.config.smallFloatWindowOffset))
+			end
+			]]--
 		end
 
-		
+
 		--- Main window ---
+		self.main = {}
+
 		self.main.zoneConfigArea = self.wndMain:FindChild("ZoneConfigArea")
 		self.main.zoneTab = self.wndMain:FindChild("btnZoneTab")
 		self.main.colorConfigArea = self.wndMain:FindChild("ColorsConfigArea")
@@ -142,6 +161,8 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.OFEditBox = self.wndMain:FindChild("OFEditBox")
 
 		--- Floater ---
+		self.float = {}
+
 		self.float.presetList = self.wndFloat:FindChild("wndPresetList")
 		self.float.presetList:Show(false, true)
 		self.float.txtZone = self.wndFloat:FindChild("wndPresetZoneText")
@@ -149,7 +170,8 @@ function SmartTelegraphs:OnDocLoaded()
 		self.float.colorDisplay = self.wndFloat:FindChild("wndPresetColorDisplay")
 
 		--- Small floater ---
-		self.smallFloat.colorDisplay = nil
+		self.smallFloat = {}
+		--self.smallFloat.colorDisplay = nil
 
 		self:UpdateUI()
 	end
@@ -306,6 +328,7 @@ function SmartTelegraphs:OnSave(eLevel)
 	
 	self.config.mainWindowOffset = { self.wndMain:GetAnchorOffsets() }
 	self.config.floatWindowOffset = { self.wndFloat:GetAnchorOffsets() }
+	-- self.config.smallFloatWindowOffset = { self.wndSmallFloat:GetAnchorOffsets() } TODO Create and enable this
 
 	tData.config = self:DeepCopy(self.config)
 	tData.data = self:DeepCopy(self.data)
