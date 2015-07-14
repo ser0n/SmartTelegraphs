@@ -221,7 +221,10 @@ end
 
 function SmartTelegraphs:UpdateUI()
 	local tZone = GameLib.GetCurrentZoneMap()
-	local zone = self:GetZone(tZone.id)
+	local zoneId = -1
+	if tZone ~= nil then zoneId = tZone.id end
+
+	local zone = self:GetZone(zoneId)
 
 	-- Main Window
 	if self.wndMain:IsShown() then
@@ -239,7 +242,9 @@ end
 
 function SmartTelegraphs:UpdateTelegraphs()
 	local tZone = GameLib.GetCurrentZoneMap()
-	local zone = self:GetZone(tZone.id)
+	local zoneId = -1
+	if tZone ~= nil then zoneId = tZone.id end
+	local zone = self:GetZone(zoneId)
 
 	self:SetTelegraphColors(zone.colorId)
 end
@@ -639,8 +644,10 @@ function SmartTelegraphs:GetZone(zoneId)
 
 	if zone == nil then
 		local tZone = GameLib.GetCurrentZoneMap()
+		local zoneName = "Loading..."
+		if tZone ~= nil then zoneName = tZone.strName end
 		zone = {
-			zoneName = tZone.strName,
+			zoneName = zoneName,
 			subzoneName = "Subzone",
 			color = "||"
 		}
