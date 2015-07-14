@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Addon Author="ser0n" APIVersion="10" Name="SmartTelegraphs" Description="telegraphs....." Version="">
+<Addon Author="ser0n" APIVersion="10" Name="SmartTelegraphs" Description="Swap enemy telegraph color based on the location your currently are in." Version="0.2.0">
     <Script Name="SmartTelegraphs.lua"/>
     <Form Name="SmartTelegraphs.xml"/>
 </Addon>
