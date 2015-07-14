@@ -29,7 +29,7 @@ function SmartTelegraphs:new(o)
 
 	self.config.version = {
 		major = 0,
-  		minor = 1,
+  		minor = 2,
   		patch = 0
 	}
 
@@ -317,7 +317,7 @@ end
 -- SmartTelegraphsForm Functions
 -----------------------------------------------------------------------------------------------
 function SmartTelegraphs:OnSave(eLevel)
-	if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Character then return end
+	if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Account then return end
 		
 	local tData = {}
 	
@@ -332,7 +332,7 @@ function SmartTelegraphs:OnSave(eLevel)
 end
 
 function SmartTelegraphs:OnRestore(eLevel, tData)
-	if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Character then return end
+	if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Account then return end
 	
 	if tData.config then
 		self.config = self:DeepCopy(tData.config)
