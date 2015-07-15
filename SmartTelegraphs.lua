@@ -308,6 +308,7 @@ function SmartTelegraphs:UpdateFloaterWindow(zone)
 		self.float.txtZone:SetText(zone.zoneName)
 		self.float.txtSubzone:SetText("") -- zone.subzoneName
 		self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
+		self.smallFloat.colorDisplay:SetBGColor(self:CreateCColor(color))
 	else
 		self.smallFloat.colorDisplay:SetBGColor(self:CreateCColor(color))
 	end
