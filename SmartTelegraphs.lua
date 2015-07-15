@@ -157,16 +157,21 @@ function SmartTelegraphs:OnDocLoaded()
 
 		--- Floater ---
 		self.float = {}
-
+		
+		local floater = self.wndFloat:FindChild("wndPresetDropUp")
+		
 		self.float.presetList = self.wndFloat:FindChild("wndPresetList")
 		self.float.presetList:Show(false, true)
-		self.float.txtZone = self.wndFloat:FindChild("wndPresetZoneText")
-		self.float.txtSubzone = self.wndFloat:FindChild("wndPresetSubzoneText")
-		self.float.colorDisplay = self.wndFloat:FindChild("wndPresetColorDisplay")
+		self.float.txtZone = floater:FindChild("wndPresetZoneText")
+		self.float.txtSubzone = floater:FindChild("wndPresetSubzoneText")
+		self.float.colorDisplay = floater:FindChild("ColorDisplay")
 
 		--- Small floater ---
 		self.smallFloat = {}
-		--self.smallFloat.colorDisplay = nil
+		
+		local smallFloater = self.wndFloat:FindChild("wndPresetDropUpMini")
+		
+		self.smallFloat.colorDisplay = smallFloater:FindChild("ColorDisplay")
 
 		self:UpdateUI()
 	end
@@ -495,12 +500,13 @@ function SmartTelegraphs:OnCheckSettingsTab( wndHandler, wndControl, eMouseButto
 end
 
 function SmartTelegraphs:ShowTab(nTab)
-	if nTab < 1 or nTab > 2 then return end
+	if nTab < 1 or nTab > 3 then return end
 	
 	self.main.zoneConfigArea:Show(nTab == 1, true)
 	self.main.zoneTab:SetCheck(nTab == 1)
 	self.main.colorConfigArea:Show(nTab == 2, true)
 	self.main.colorTab:SetCheck(nTab == 2)
+	self.main.listArea:Show(nTab == 1 or nTab == 2, true)
 
 	if nTab == 1 then
 		self:UpdateZoneConfigArea()
@@ -549,6 +555,8 @@ function SmartTelegraphs:OnSaveZoneButton( wndHandler, wndControl, eMouseButton 
 	self:UpdateZoneList()
 end
 
+
+
 ---------------------------------------------------
 -- Floater Event Handling
 ---------------------------------------------------
@@ -560,7 +568,7 @@ function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
 		self:UpdateFloatList()
 		self.float.presetList:Show(true, true)
 	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
-		SmartTelegraphs:OnSmartTelegraphsOn()
+		self:OnSmartTelegraphsOn()
 	end
 end
 
