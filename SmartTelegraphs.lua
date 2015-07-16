@@ -158,20 +158,12 @@ function SmartTelegraphs:OnDocLoaded()
 		--- Floater ---
 		self.float = {}
 		
-		local floater = self.wndFloat:FindChild("wndPresetDropUp")
-		
 		self.float.presetList = self.wndFloat:FindChild("wndPresetList")
 		self.float.presetList:Show(false, true)
-		self.float.txtZone = floater:FindChild("wndPresetZoneText")
-		self.float.txtSubzone = floater:FindChild("wndPresetSubzoneText")
-		self.float.colorDisplay = floater:FindChild("ColorDisplay")
-
-		--- Small floater ---
-		self.smallFloat = {}
-		
-		local smallFloater = self.wndFloat:FindChild("wndPresetDropUpMini")
-		
-		self.smallFloat.colorDisplay = smallFloater:FindChild("ColorDisplay")
+		self.float.textContainer = self.wndFloat:FindChild("wndPresetTextContainer")
+		self.float.txtZone = self.wndFloat:FindChild("txtZoneFloat")
+		self.float.txtSubzone = self.wndFloat:FindChild("txtSubzoneFloat")
+		self.float.colorDisplay = self.wndFloat:FindChild("ColorDisplay")
 
 		self:UpdateUI()
 	end
@@ -303,15 +295,11 @@ end
 
 function SmartTelegraphs:UpdateFloaterWindow(zone)
 	local color = self:GetColor(zone.colorId)
-
-	if not self.config.showSmallFloat then
-		self.float.txtZone:SetText(zone.zoneName)
-		self.float.txtSubzone:SetText("") -- zone.subzoneName
-		self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
-		self.smallFloat.colorDisplay:SetBGColor(self:CreateCColor(color))
-	else
-		self.smallFloat.colorDisplay:SetBGColor(self:CreateCColor(color))
-	end
+	
+	self.float.textContainer:Show(not self.config.showSmallFloat,true)
+	self.float.txtZone:SetText(zone.zoneName)
+	self.float.txtSubzone:SetText("") -- zone.subzoneName
+	self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
 end
 
 
@@ -334,7 +322,6 @@ function SmartTelegraphs:OnSave(eLevel)
 	
 	self.config.mainWindowOffset = { self.wndMain:GetAnchorOffsets() }
 	self.config.floatWindowOffset = { self.wndFloat:GetAnchorOffsets() }
-	-- self.config.smallFloatWindowOffset = { self.wndSmallFloat:GetAnchorOffsets() } TODO Create and enable this
 
 	tData.config = self:DeepCopy(self.config)
 	tData.data = self:DeepCopy(self.data)
