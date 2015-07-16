@@ -141,7 +141,8 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.zoneTab = self.wndMain:FindChild("btnZoneTab")
 		self.main.colorConfigArea = self.wndMain:FindChild("ColorsConfigArea")
 		self.main.colorTab = self.wndMain:FindChild("btnColorTab")
-
+		self.main.settingsTab = self.wndMain:FindChild("btnSettingsTab")
+		
 		self.main.listArea = self.wndMain:FindChild("ListArea")
 
 		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
@@ -490,12 +491,14 @@ end
 function SmartTelegraphs:ShowTab(nTab)
 	if nTab < 1 or nTab > 3 then return end
 	
-	self.main.zoneConfigArea:Show(nTab == 1, true)
-	self.main.zoneTab:SetCheck(nTab == 1)
-	self.main.colorConfigArea:Show(nTab == 2, true)
-	self.main.colorTab:SetCheck(nTab == 2)
 	self.main.listArea:Show(nTab == 1 or nTab == 2, true)
-
+	self.main.colorConfigArea:Show(nTab == 1, true)
+	self.main.colorTab:SetCheck(nTab == 1)
+	self.main.zoneConfigArea:Show(nTab == 2, true)
+	self.main.zoneTab:SetCheck(nTab == 2)
+	
+	self.main.settingsTab:SetCheck(nTab == 3)
+	
 	if nTab == 1 then
 		self:UpdateZoneConfigArea()
 		self:UpdateZoneList()		
