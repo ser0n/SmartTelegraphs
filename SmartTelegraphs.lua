@@ -30,7 +30,7 @@ function SmartTelegraphs:new(o)
 	self.config.version = {
 		major = 0,
   		minor = 3,
-  		patch = 0
+  		patch = 1
 	}
 
 	self.config.lastTab = 1
@@ -525,6 +525,10 @@ function SmartTelegraphs:OnMiniFloaterCBCheck( wndHandler, wndControl, eMouseBut
 	self.float.textContainer:Show(not self.config.showSmallFloat)
 end
 
+function SmartTelegraphs:OnMainWindowClosed( wndHandler, wndControl )
+	self.main.listArea:DestroyChildren()
+end
+
 ---------------------------------------------------------------------------------------------------
 -- SmartTelegraphsColorPicker Functions
 ---------------------------------------------------------------------------------------------------
@@ -623,9 +627,10 @@ function SmartTelegraphs:OnFloatListItemClick( wndHandler, wndControl, eMouseBut
 		self.data.zones[tZone.id] = zone
 
 		self:UpdateFloaterWindow(zone)
-		self:ShowTab(self.config.lastTab)
 		self:UpdateTelegraphs()
 		self.wndFloatList:Show(false, true)
+		self.wndFloatList:DestroyChildren()
+		self:UpdateUI()
 	end
 end
 
