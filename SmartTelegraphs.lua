@@ -29,7 +29,7 @@ function SmartTelegraphs:new(o)
 
 	self.config.version = {
 		major = 0,
-  		minor = 2,
+  		minor = 3,
   		patch = 0
 	}
 
@@ -92,8 +92,9 @@ function SmartTelegraphs:OnDocLoaded()
 
 	if self.xmlDoc ~= nil and self.xmlDoc:IsLoaded() then
 	    self.wndMain = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsForm", nil, self)
+		self.wndColorPicker = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsColorPicker", self.wndMain, self)
 		self.wndFloat = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloat", nil, self)
-		-- self.wndSmallFloat = Appolo.LoadForm(self.xmlDoc, "SmartTelegraphsSmallFloat", nil, self) TODO Create and fix this
+		self.wndFloatList = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloatList", self.wndFloat, self)
 		
 		if self.wndMain == nil then
 			Apollo.AddAddonErrorText(self, "Could not load the main window for some reason.")
@@ -109,9 +110,10 @@ function SmartTelegraphs:OnDocLoaded()
 		end
 		
 	  	self.wndMain:Show(false, true)
+		self.wndColorPicker:Show(false, true)
 		self.wndFloat:Show(true, true)
-		-- self.wndSmallFloat:Show(false, true)
-
+		self.wndFloatList:Show(false, true)
+		
 		-- Register handlers for events, slash commands and timer, etc.
 		-- e.g. Apollo.RegisterEventHandler("KeyDown", "OnKeyDown", self)
 		Apollo.RegisterSlashCommand("st", 						"OnSmartTelegraphsOn", self)
@@ -126,11 +128,6 @@ function SmartTelegraphs:OnDocLoaded()
 			if self.config.floatWindowOffset and self.config.floatWindowOffset ~= nil then
 				self.wndFloat:SetAnchorOffsets(unpack(self.config.floatWindowOffset))
 			end
-			--[[
-			if self.config.smallFloatWindowOffset and self.config.smallFloatWindowOffset ~= nil then
-				self.wndFloat:SetAnchorOffsets(unpack(self.config.smallFloatWindowOffset))
-			end
-			]]--
 		end
 
 
@@ -144,26 +141,35 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.settingsTab = self.wndMain:FindChild("btnSettingsTab")
 		
 		self.main.listArea = self.wndMain:FindChild("ListArea")
-
-		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
-		self.main.subZoneNameDisplay = self.wndMain:FindChild("SubzoneNameDisplay")
-
+		self.main.settingsArea = self.wndMain:FindChild("SettingsArea")
+		
 		self.main.colorName = self.wndMain:FindChild("ColorNameEditBox")
 		self.main.colorDisplay = self.wndMain:FindChild("ColorDisplay")
-		self.main.REditBox = self.wndMain:FindChild("REditBox")
-		self.main.GEditBox = self.wndMain:FindChild("GEditBox")
-		self.main.BEditBox = self.wndMain:FindChild("BEditBox")
-		self.main.IFEditBox = self.wndMain:FindChild("IFEditBox")
-		self.main.OFEditBox = self.wndMain:FindChild("OFEditBox")
+		
+		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
+		self.main.subZoneNameDisplay = self.wndMain:FindChild("SubzoneNameDisplay")
+		self.main.zoneColorDisplay = self.wndMain:FindChild("zoneColorDisplay")
 
+		self.main.btnMiniFloater = self.wndMain:FindChild("btnMiniFloaterCB")
+		
+		--- Color Picker ---
+		self.colorPick = {}
+		
+		self.colorPick.REditBox = self.wndColorPicker:FindChild("REditBox")
+		self.colorPick.GEditBox = self.wndColorPicker:FindChild("GEditBox")
+		self.colorPick.BEditBox = self.wndColorPicker:FindChild("BEditBox")
+		self.colorPick.IFEditBox = self.wndColorPicker:FindChild("IFEditBox")
+		self.colorPick.IFSlider = self.wndColorPicker:FindChild("IFSliderBar")
+		self.colorPick.OFEditBox = self.wndColorPicker:FindChild("OFEditBox")
+		self.colorPick.OFSlider = self.wndColorPicker:FindChild("OFSliderBar")
+		self.colorPick.ColorPicker = self.wndColorPicker:FindChild("ColorPicker")
+		
 		--- Floater ---
 		self.float = {}
-		
-		self.float.presetList = self.wndFloat:FindChild("wndPresetList")
-		self.float.presetList:Show(false, true)
+
 		self.float.textContainer = self.wndFloat:FindChild("wndPresetTextContainer")
-		self.float.txtZone = self.wndFloat:FindChild("txtZoneFloat")
-		self.float.txtSubzone = self.wndFloat:FindChild("txtSubzoneFloat")
+		self.float.txtZone = self.wndFloat:FindChild("txtFloatZone")
+		self.float.txtSubzone = self.wndFloat:FindChild("txtFloatSubzone")
 		self.float.colorDisplay = self.wndFloat:FindChild("ColorDisplay")
 
 		self:UpdateUI()
@@ -233,7 +239,7 @@ function SmartTelegraphs:UpdateUI()
 		end
 	end
 	-- Floater
-	self:UpdateFloaterWindow(zone)
+	self:UpdateFloaterWindow()
 	-- Telegraphs
 	self:UpdateTelegraphs()
 end
@@ -265,36 +271,51 @@ end
 -----------------------------------------------------------------------------------------------
 
 function SmartTelegraphs:UpdateZoneConfigArea()
-	local tZoneId = GameLib.GetCurrentZoneId()
-	local tWorldId = GameLib.GetCurrentWorldId()
 	local tZone = GameLib.GetCurrentZoneMap()
-	local tZoneName = tZone.strName
 	local tSubzoneName = GetCurrentSubZoneName()
+	local zoneId = -1
+	if tZone ~= nil then zoneId = tZone.id end
 
-	--local color = self:GetColor("||")
+	local zone = self:GetZone(zoneId)
+	
+	local color = self:GetColor(zone.colorId)
 
 	-- Folder
-	self.main.zoneNameDisplay:SetText(tZoneName)
+	self.main.zoneNameDisplay:SetText(zone.zoneName)
 	self.main.subZoneNameDisplay:SetText(tSubzoneName)
+	self.main.zoneColorDisplay:SetBGColor(self:CreateCColor(color))
 end
 
 function SmartTelegraphs:UpdateColorConfigArea()
-	local tZoneId = GameLib.GetCurrentZoneId()
-	local zone = self:GetZone(tZoneId)
+	local tZone = GameLib.GetCurrentZoneMap()
+	local zoneId = -1
+	if tZone ~= nil then zoneId = tZone.id end
+
+	local zone = self:GetZone(zoneId)
+	
 	local color = self:GetColor(zone.colorId)
 
 	self.main.colorName:SetText(color.colorName)
-
-	self.main.REditBox:SetText(color.r)
-	self.main.GEditBox:SetText(color.g)
-	self.main.BEditBox:SetText(color.b)
-	self.main.IFEditBox:SetText(color.fo)
-	self.main.OFEditBox:SetText(color.oo)
-
+	
+	self.colorPick.REditBox:SetText(color.r)
+	self.colorPick.GEditBox:SetText(color.g)
+	self.colorPick.BEditBox:SetText(color.b)
+	self.colorPick.IFEditBox:SetText(color.fo)
+	self.colorPick.IFSlider:SetValue(color.fo)
+	self.colorPick.OFEditBox:SetText(color.oo)
+	self.colorPick.OFSlider:SetValue(color.oo)
+	
 	self.main.colorDisplay:SetBGColor(self:CreateCColor(color))
+	self.colorPick.ColorPicker:SetColor(ApolloColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0))
 end
 
-function SmartTelegraphs:UpdateFloaterWindow(zone)
+function SmartTelegraphs:UpdateFloaterWindow()
+	local tZone = GameLib.GetCurrentZoneMap()
+	local zoneId = -1
+	if tZone ~= nil then zoneId = tZone.id end
+
+	local zone = self:GetZone(zoneId)
+	
 	local color = self:GetColor(zone.colorId)
 	
 	self.float.textContainer:Show(not self.config.showSmallFloat,true)
@@ -348,49 +369,6 @@ function SmartTelegraphs:OnCloseButtonPressed( wndHandler, wndControl, eMouseBut
 	self.wndMain:Close()
 end
 
--- TODO should probably do a wrapper function for getting color from ui
-function SmartTelegraphs:OnColorEditBoxChanged( wndHandler, wndControl, strText )
-	local value = tonumber(strText)
-	if value ~= nil then
-		if value > 255 then
-			wndControl:SetText(255)
-		elseif value < 0 then
-			wndControl:SetText(0)
-		end
-	else
-		wndControl:SetText(0)
-	end
-	
-	local r = tonumber(self.main.REditBox:GetText()) / 255.0
-	local g = tonumber(self.main.GEditBox:GetText()) / 255.0
-	local b = tonumber(self.main.BEditBox:GetText()) / 255.0
-	local fo = tonumber(self.main.IFEditBox:GetText()) / 100.0
-	local of = tonumber(self.main.OFEditBox:GetText()) / 100.0
-	
-	self.main.colorDisplay:SetBGColor(CColor.new(r, g, b, fo))
-end
-
-function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strText )
-	local value = tonumber(strText)
-	if value ~= nil then
-		if value > 100 then
-			wndControl:SetText(100)
-		elseif value < 0 then
-			wndControl:SetText(0)
-		end
-	else
-		wndControl:SetText(0)
-	end
-
-	local r = tonumber(self.main.REditBox:GetText()) / 255.0
-	local g = tonumber(self.main.GEditBox:GetText()) / 255.0
-	local b = tonumber(self.main.BEditBox:GetText()) / 255.0
-	local fo = tonumber(self.main.IFEditBox:GetText()) / 100.0
-	local of = tonumber(self.main.OFEditBox:GetText()) / 100.0
-	
-	self.main.colorDisplay:SetBGColor(CColor.new(r, g, b, fo))
-end
-
 function SmartTelegraphs:DrawZoneItem(zoneId)
 	local newZoneItem = Apollo.LoadForm(self.xmlDoc,"ZoneTemplateFrame", self.main.listArea, self)	
 	
@@ -440,7 +418,7 @@ function SmartTelegraphs:DrawColorItem(colorId)
 end
 
 function SmartTelegraphs:DrawFloatListItem(colorId)
-	local newColorItem = Apollo.LoadForm(self.xmlDoc,"ColorFloatItemTemplateFrame", self.float.presetList, self)	
+	local newColorItem = Apollo.LoadForm(self.xmlDoc,"ColorFloatItemTemplateFrame", self.wndFloatList, self)	
 
 	local color = self:GetColor(colorId)
 
@@ -453,14 +431,16 @@ function SmartTelegraphs:DrawFloatListItem(colorId)
 	local colorDisplay = newColorItem:FindChild("ColorDisplay")
 	colorDisplay:SetBGColor(self:CreateCColor(color));
 	
-	self.float.presetList:ArrangeChildrenVert()
+	self.wndFloatList:ArrangeChildrenVert()
 end
 
 function SmartTelegraphs:OnSaveColorButton( wndHandler, wndControl, eMouseButton )
 
-	local r = self.main.REditBox:GetText()
-	local g = self.main.GEditBox:GetText()
-	local b = self.main.BEditBox:GetText()
+	local r = self.colorPick.REditBox:GetText()
+	local g = self.colorPick.GEditBox:GetText()
+	local b = self.colorPick.BEditBox:GetText()
+	local fo = self.colorPick.IFEditBox:GetText()
+	local oo = self.colorPick.OFEditBox:GetText()
 	
 	local colorHash = r .. "|" .. g .. "|" .. b
 		
@@ -469,18 +449,20 @@ function SmartTelegraphs:OnSaveColorButton( wndHandler, wndControl, eMouseButton
 		r = r,
 		g = g,
 		b = b,
-		fo = 100,
-		oo = 100
+		fo = fo,
+		oo = oo
 	}
 
 	self:UpdateColorList()
-end
-
-function SmartTelegraphs:OnCheckZoneTab( wndHandler, wndControl, eMouseButton )
-	self:ShowTab(1);
+	self:UpdateColorConfigArea()
+	self:UpdateFloaterWindow()
 end
 
 function SmartTelegraphs:OnCheckColorTab( wndHandler, wndControl, eMouseButton )
+	self:ShowTab(1);
+end
+
+function SmartTelegraphs:OnCheckZoneTab( wndHandler, wndControl, eMouseButton )
 	self:ShowTab(2);
 end
 
@@ -490,21 +472,25 @@ end
 
 function SmartTelegraphs:ShowTab(nTab)
 	if nTab < 1 or nTab > 3 then return end
-	
+			
 	self.main.listArea:Show(nTab == 1 or nTab == 2, true)
 	self.main.colorConfigArea:Show(nTab == 1, true)
+	self.wndColorPicker:Show(nTab == 1, true)
 	self.main.colorTab:SetCheck(nTab == 1)
 	self.main.zoneConfigArea:Show(nTab == 2, true)
 	self.main.zoneTab:SetCheck(nTab == 2)
 	
+	self.main.settingsArea:Show(nTab == 3, true)
 	self.main.settingsTab:SetCheck(nTab == 3)
 	
 	if nTab == 1 then
-		self:UpdateZoneConfigArea()
-		self:UpdateZoneList()		
-	elseif nTab == 2 then
 		self:UpdateColorConfigArea()
 		self:UpdateColorList()
+	elseif nTab == 2 then
+		self:UpdateZoneConfigArea()
+		self:UpdateZoneList()
+	elseif nTab == 3 then
+		self.main.btnMiniFloater:SetCheck(self.config.showSmallFloat)
 	end
 
 	self.config.lastTab = nTab
@@ -527,37 +513,96 @@ function SmartTelegraphs:UpdateColorList()
 end
 
 function SmartTelegraphs:UpdateFloatList()
-	self.float.presetList:DestroyChildren()
+	self.wndFloatList:DestroyChildren()
 
 	for i, peCurrent in pairs(self.data.colors) do
 		self:DrawFloatListItem(i)
 	end
 end
 
-function SmartTelegraphs:OnSaveZoneButton( wndHandler, wndControl, eMouseButton )
-	local tZone = GameLib.GetCurrentZoneMap()
+function SmartTelegraphs:OnMiniFloaterCBCheck( wndHandler, wndControl, eMouseButton )
+	self.config.showSmallFloat = self.main.btnMiniFloater:IsChecked()
+	self.float.textContainer:Show(not self.config.showSmallFloat)
+end
 
-	self.data.zones[tZone.id] = {
-				zoneName = tZone.strName,
-				subzoneName = "",
-				colorId = "||"
-			}
+---------------------------------------------------------------------------------------------------
+-- SmartTelegraphsColorPicker Functions
+---------------------------------------------------------------------------------------------------
 
-	self:UpdateZoneList()
+function SmartTelegraphs:OnColorChanged( wndHandler, wndControl, crNewColor )
+	self.colorPick.REditBox:SetText(math.floor(crNewColor.r * 255.0))
+	self.colorPick.GEditBox:SetText(math.floor(crNewColor.g * 255.0))
+	self.colorPick.BEditBox:SetText(math.floor(crNewColor.b * 255.0))
+	
+	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
+	
+	self.main.colorDisplay:SetBGColor(ApolloColor.new(crNewColor.r, crNewColor.g, crNewColor.b, fo))
+end
+
+-- TODO should probably do a wrapper function for getting color from ui
+function SmartTelegraphs:OnColorEditBoxChanged( wndHandler, wndControl, strText )
+	local value = tonumber(strText)
+	if value ~= nil then
+		if value > 255 then
+			wndControl:SetText(255)
+		elseif value < 0 then
+			wndControl:SetText(0)
+		end
+	else
+		wndControl:SetText(0)
+	end
+	
+	local r = tonumber(self.colorPick.REditBox:GetText()) / 255.0
+	local g = tonumber(self.colorPick.GEditBox:GetText()) / 255.0
+	local b = tonumber(self.colorPick.BEditBox:GetText()) / 255.0
+	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
+	local of = tonumber(self.colorPick.OFEditBox:GetText()) / 100.0
+	
+	self.main.colorDisplay:SetBGColor(ApolloColor.new(r, g, b, fo))
+	self.colorPick.ColorPicker:SetColor(ApolloColor.new(r, g, b))
+end
+
+function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strText )
+	local value = tonumber(strText)
+	if value ~= nil then
+		if value > 100 then
+			wndControl:SetText(100)
+		elseif value < 0 then
+			wndControl:SetText(0)
+		end
+	else
+		wndControl:SetText(0)
+	end
+
+	local r = tonumber(self.colorPick.REditBox:GetText()) / 255.0
+	local g = tonumber(self.colorPick.GEditBox:GetText()) / 255.0
+	local b = tonumber(self.colorPick.BEditBox:GetText()) / 255.0
+	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
+	local of = tonumber(self.colorPick.OFEditBox:GetText()) / 100.0
+	
+	self.main.colorDisplay:SetBGColor(ApolloColor.new(r, g, b, fo))
+	self.colorPick.ColorPicker:SetColor(ApolloColor.new(r, g, b))
 end
 
 
+function SmartTelegraphs:OnIFOpacitySliderChanged( wndHandler, wndControl, fNewValue, fOldValue )
+	self.colorPick.IFEditBox:SetText(math.floor(fNewValue))
+end
+
+function SmartTelegraphs:OnOFOpacitySliderChanged( wndHandler, wndControl, fNewValue, fOldValue )
+	self.colorPick.OFEditBox:SetText(math.floor(fNewValue))
+end
 
 ---------------------------------------------------
 -- Floater Event Handling
 ---------------------------------------------------
 
 function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
-	if wndControl ~= self.wndFloat then return end
+	if wndControl == self.float.colorDisplay or wndControl == self.float.textContainer then else return end
 	
 	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
 		self:UpdateFloatList()
-		self.float.presetList:Show(true, true)
+		self.wndFloatList:Show(true, true)
 	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
 		self:OnSmartTelegraphsOn()
 	end
@@ -580,6 +625,7 @@ function SmartTelegraphs:OnFloatListItemClick( wndHandler, wndControl, eMouseBut
 		self:UpdateFloaterWindow(zone)
 		self:ShowTab(self.config.lastTab)
 		self:UpdateTelegraphs()
+		self.wndFloatList:Show(false, true)
 	end
 end
 
@@ -666,7 +712,7 @@ function SmartTelegraphs:GetColor(colorId)
 end
 
 function SmartTelegraphs:CreateCColor(color)	
-	local color = CColor.new(
+	local color = ApolloColor.new(
 				color.r / 255.0, 
 				color.g / 255.0, 
 				color.b / 255.0, 
@@ -693,7 +739,7 @@ function SmartTelegraphs:TableLength(tTable)
   	local count = 0
   	for _ in pairs(tTable) do count = count + 1 end
   	return count
-end 
+end
 
 -----------------------------------------------------------------------------------------------
 -- SmartTelegraphs Instance
