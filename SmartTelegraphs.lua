@@ -529,6 +529,10 @@ function SmartTelegraphs:OnMainWindowClosed( wndHandler, wndControl )
 	self.main.listArea:DestroyChildren()
 end
 
+function SmartTelegraphs:OnFloaterListClosed( wndHandler, wndControl )
+	self.wndFloatList:DestroyChildren()
+end
+
 ---------------------------------------------------------------------------------------------------
 -- SmartTelegraphsColorPicker Functions
 ---------------------------------------------------------------------------------------------------
