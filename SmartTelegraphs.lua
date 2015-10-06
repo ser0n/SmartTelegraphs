@@ -29,8 +29,8 @@ function SmartTelegraphs:new(o)
 
 	self.config.version = {
 		major = 0,
-  		minor = 3,
-  		patch = 1
+  		minor = 4,
+  		patch = 0
 	}
 
 	self.config.lastTab = 1
