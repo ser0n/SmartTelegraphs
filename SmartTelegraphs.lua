@@ -10,6 +10,11 @@ require "Window"
 -- SmartTelegraphs Module Definition
 -----------------------------------------------------------------------------------------------
 local SmartTelegraphs = {}
+local SmartTelegraphsVersion = {
+		major = 0,
+  		minor = 5,
+  		patch = 0
+	}
 -----------------------------------------------------------------------------------------------
 -- Constants
 -----------------------------------------------------------------------------------------------
@@ -27,14 +32,7 @@ function SmartTelegraphs:new(o)
 
 	self.config = {}
 
-	self.config.version = {
-		major = 0,
-  		minor = 4,
-  		patch = 0
-	}
-
 	self.config.lastTab = 1
-	self.config.showSmallFloat = false
 	self.config.defaultColor = {
 			colorName = "CRB_RED",
 			r = 255,
@@ -94,25 +92,23 @@ function SmartTelegraphs:OnDocLoaded()
 	    self.wndMain = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsForm", nil, self)
 		self.wndColorPicker = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsColorPicker", self.wndMain, self)
 		self.wndFloat = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloat", nil, self)
-		self.wndFloatList = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloatList", self.wndFloat, self)
-		
+		self.wndFloatListWrapper = Apollo.LoadForm(self.xmlDoc, "SmartTelegraphsFloatListWrapper", self.wndFloat, self)
+				
 		if self.wndMain == nil then
 			Apollo.AddAddonErrorText(self, "Could not load the main window for some reason.")
 			return
 		elseif self.wndFloat == nil then
 			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
 			return
-			--[[
-		elseif self.wndSmallFloat == nil then
-			Apollo.AddAddonErrorText(self, "Could not load the floater for some reason.")
+		elseif self.wndFloatListWrapper == nil then
+			Apollo.AddAddonErrorText(self, "Could not load the floaterlist for some reason.")
 			return
-			]]--
 		end
 		
 	  	self.wndMain:Show(false, true)
 		self.wndColorPicker:Show(false, true)
 		self.wndFloat:Show(true, true)
-		self.wndFloatList:Show(false, true)
+		self.wndFloatListWrapper:Show(false, true)
 		
 		-- Register handlers for events, slash commands and timer, etc.
 		-- e.g. Apollo.RegisterEventHandler("KeyDown", "OnKeyDown", self)
@@ -134,6 +130,12 @@ function SmartTelegraphs:OnDocLoaded()
 		--- Main window ---
 		self.main = {}
 
+		self.main.title = self.wndMain:FindChild("SmartTelegraphsTitle")
+		self.main.title:SetText(self.main.title:GetText() .. 
+								" v" .. SmartTelegraphsVersion.major .. 
+								"." .. SmartTelegraphsVersion.minor .. 
+								"." .. SmartTelegraphsVersion.patch)
+		
 		self.main.zoneConfigArea = self.wndMain:FindChild("ZoneConfigArea")
 		self.main.zoneTab = self.wndMain:FindChild("btnZoneTab")
 		self.main.colorConfigArea = self.wndMain:FindChild("ColorsConfigArea")
@@ -149,8 +151,6 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
 		self.main.subZoneNameDisplay = self.wndMain:FindChild("SubzoneNameDisplay")
 		self.main.zoneColorDisplay = self.wndMain:FindChild("zoneColorDisplay")
-
-		self.main.btnMiniFloater = self.wndMain:FindChild("btnMiniFloaterCB")
 		
 		--- Color Picker ---
 		self.colorPick = {}
@@ -167,11 +167,9 @@ function SmartTelegraphs:OnDocLoaded()
 		--- Floater ---
 		self.float = {}
 
-		self.float.textContainer = self.wndFloat:FindChild("wndPresetTextContainer")
-		self.float.txtZone = self.wndFloat:FindChild("txtFloatZone")
-		self.float.txtSubzone = self.wndFloat:FindChild("txtFloatSubzone")
 		self.float.colorDisplay = self.wndFloat:FindChild("ColorDisplay")
-
+		self.float.floatList = self.wndFloatListWrapper:FindChild("SmartTelegraphsFloatList")
+		
 		self:UpdateUI()
 	end
 end
@@ -227,7 +225,7 @@ function SmartTelegraphs:UpdateUI()
 	local tZone = GameLib.GetCurrentZoneMap()
 	local zoneId = -1
 	if tZone ~= nil then zoneId = tZone.id end
-
+	
 	local zone = self:GetZone(zoneId)
 
 	-- Main Window
@@ -317,10 +315,7 @@ function SmartTelegraphs:UpdateFloaterWindow()
 	local zone = self:GetZone(zoneId)
 	
 	local color = self:GetColor(zone.colorId)
-	
-	self.float.textContainer:Show(not self.config.showSmallFloat,true)
-	self.float.txtZone:SetText(zone.zoneName)
-	self.float.txtSubzone:SetText("") -- zone.subzoneName
+
 	self.float.colorDisplay:SetBGColor(self:CreateCColor(color))
 end
 
@@ -418,7 +413,7 @@ function SmartTelegraphs:DrawColorItem(colorId)
 end
 
 function SmartTelegraphs:DrawFloatListItem(colorId)
-	local newColorItem = Apollo.LoadForm(self.xmlDoc,"ColorFloatItemTemplateFrame", self.wndFloatList, self)	
+	local newColorItem = Apollo.LoadForm(self.xmlDoc,"ColorFloatItemTemplateFrame", self.float.floatList, self)	
 
 	local color = self:GetColor(colorId)
 
@@ -431,7 +426,7 @@ function SmartTelegraphs:DrawFloatListItem(colorId)
 	local colorDisplay = newColorItem:FindChild("ColorDisplay")
 	colorDisplay:SetBGColor(self:CreateCColor(color));
 	
-	self.wndFloatList:ArrangeChildrenVert()
+	self.float.floatList:ArrangeChildrenVert()
 end
 
 function SmartTelegraphs:OnSaveColorButton( wndHandler, wndControl, eMouseButton )
@@ -490,7 +485,7 @@ function SmartTelegraphs:ShowTab(nTab)
 		self:UpdateZoneConfigArea()
 		self:UpdateZoneList()
 	elseif nTab == 3 then
-		self.main.btnMiniFloater:SetCheck(self.config.showSmallFloat)
+		
 	end
 
 	self.config.lastTab = nTab
@@ -513,24 +508,20 @@ function SmartTelegraphs:UpdateColorList()
 end
 
 function SmartTelegraphs:UpdateFloatList()
-	self.wndFloatList:DestroyChildren()
+	self.float.floatList:DestroyChildren()
 
 	for i, peCurrent in pairs(self.data.colors) do
 		self:DrawFloatListItem(i)
 	end
 end
 
-function SmartTelegraphs:OnMiniFloaterCBCheck( wndHandler, wndControl, eMouseButton )
-	self.config.showSmallFloat = self.main.btnMiniFloater:IsChecked()
-	self.float.textContainer:Show(not self.config.showSmallFloat)
-end
 
 function SmartTelegraphs:OnMainWindowClosed( wndHandler, wndControl )
 	self.main.listArea:DestroyChildren()
 end
 
 function SmartTelegraphs:OnFloaterListClosed( wndHandler, wndControl )
-	self.wndFloatList:DestroyChildren()
+	self.float.floatList:DestroyChildren()
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -606,11 +597,12 @@ end
 ---------------------------------------------------
 
 function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
-	if wndControl == self.float.colorDisplay or wndControl == self.float.textContainer then else return end
-	
+	if wndControl == self.wndFloat then else return end
+
 	if eMouseButton == GameLib.CodeEnumInputMouse.Left then
 		self:UpdateFloatList()
-		self.wndFloatList:Show(true, true)
+		self.wndFloatListWrapper:Show(true, true)
+		self.float.floatList:Show(true, true)
 	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
 		self:OnSmartTelegraphsOn()
 	end
@@ -632,8 +624,8 @@ function SmartTelegraphs:OnFloatListItemClick( wndHandler, wndControl, eMouseBut
 
 		self:UpdateFloaterWindow(zone)
 		self:UpdateTelegraphs()
-		self.wndFloatList:Show(false, true)
-		self.wndFloatList:DestroyChildren()
+		self.wndFloatListWrapper:Show(false, true)
+		self.float.floatList:DestroyChildren()
 		self:UpdateUI()
 	end
 end
