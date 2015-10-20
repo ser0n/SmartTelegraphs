@@ -13,7 +13,7 @@ local SmartTelegraphs = {}
 local SmartTelegraphsVersion = {
 		major = 0,
   		minor = 5,
-  		patch = 0
+  		patch = 1
 	}
 -----------------------------------------------------------------------------------------------
 -- Constants
