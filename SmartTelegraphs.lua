@@ -13,7 +13,7 @@ local SmartTelegraphs = {}
 local SmartTelegraphsVersion = {
 		major = 0,
   		minor = 5,
-  		patch = 3
+  		patch = 4
 	}
 -----------------------------------------------------------------------------------------------
 -- Constants
@@ -624,8 +624,8 @@ function SmartTelegraphs:OnFloatClick( wndHandler, wndControl, eMouseButton )
 			nLeft = 0
 			nRight = 200
 		else
-			nLeft = -164
-			nRight = 36
+			nLeft = -200 + oRight - oLeft
+			nRight = oRight - oLeft
 		end			
 		self.wndFloatListWrapper:SetAnchorOffsets(nLeft, nTop, nRight, nBottom)
 	elseif eMouseButton == GameLib.CodeEnumInputMouse.Right  then
