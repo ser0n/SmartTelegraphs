@@ -13,7 +13,7 @@ local SmartTelegraphs = {}
 local SmartTelegraphsVersion = {
 		major = 0,
   		minor = 5,
-  		patch = 4
+  		patch = 5
 	}
 -----------------------------------------------------------------------------------------------
 -- Constants
@@ -143,14 +143,21 @@ function SmartTelegraphs:OnDocLoaded()
 		self.main.settingsTab = self.wndMain:FindChild("btnSettingsTab")
 		
 		self.main.listArea = self.wndMain:FindChild("ListArea")
-		self.main.settingsArea = self.wndMain:FindChild("SettingsArea")
-		
+				
 		self.main.colorName = self.wndMain:FindChild("ColorNameEditBox")
 		self.main.colorDisplay = self.wndMain:FindChild("ColorDisplay")
 		
 		self.main.zoneNameDisplay = self.wndMain:FindChild("ZoneNameDisplay")
 		self.main.subZoneNameDisplay = self.wndMain:FindChild("SubzoneNameDisplay")
 		self.main.zoneColorDisplay = self.wndMain:FindChild("zoneColorDisplay")
+		
+		-- Settings
+		self.main.settingsArea = self.wndMain:FindChild("SettingsArea")
+		
+		self.main.defaultColorDisplay = self.main.settingsArea:FindChild("DefaultColorDisplay")
+		self.main.defaultColorName = self.main.settingsArea:FindChild("DefaultColorNameEditBox")
+		self.main.defaultColorEditButton = self.main.settingsArea:FindChild("btnDefaultColorEdit")
+		self.main.defaultColorSaveButton = self.main.settingsArea:FindChild("btnDefaultColorSave")
 		
 		--- Color Picker ---
 		self.colorPick = {}
@@ -307,6 +314,21 @@ function SmartTelegraphs:UpdateColorConfigArea()
 	self.colorPick.ColorPicker:SetColor(ApolloColor.new(color.r / 255.0, color.g / 255.0, color.b / 255.0))
 end
 
+function SmartTelegraphs:UpdateSettingsArea()
+	local color = self.config.defaultColor
+	
+	self.colorPick.REditBox:SetText(color.r)
+	self.colorPick.GEditBox:SetText(color.g)
+	self.colorPick.BEditBox:SetText(color.b)
+	self.colorPick.IFEditBox:SetText(color.fo)
+	self.colorPick.IFSlider:SetValue(color.fo)
+	self.colorPick.OFEditBox:SetText(color.oo)
+	self.colorPick.OFSlider:SetValue(color.oo)
+	
+	self.main.defaultColorDisplay:SetBGColor(self:CreateCColor(color))
+	self.main.defaultColorName:SetText(color.colorName)
+end
+
 function SmartTelegraphs:UpdateFloaterWindow()
 	local tZone = GameLib.GetCurrentZoneMap()
 	local zoneId = -1
@@ -453,6 +475,26 @@ function SmartTelegraphs:OnSaveColorButton( wndHandler, wndControl, eMouseButton
 	self:UpdateFloaterWindow()
 end
 
+function SmartTelegraphs:OnSaveDefaultColorButton( wndHandler, wndControl, eMouseButton )
+	
+	local nR = self.colorPick.REditBox:GetText()
+	local nG = self.colorPick.GEditBox:GetText()
+	local nB = self.colorPick.BEditBox:GetText()
+	local nFo = self.colorPick.IFEditBox:GetText()
+	local nOo = self.colorPick.OFEditBox:GetText()
+	
+	self.config.defaultColor = {
+			colorName = self.main.defaultColorName:GetText(),
+			r = nR,
+			g = nG,
+			b = nB,
+			fo = nFo,
+			oo = nOo
+		}
+		
+	self.main.defaultColorDisplay:SetBGColor(self:CreateCColor(self.config.defaultColor))
+end
+
 function SmartTelegraphs:OnCheckColorTab( wndHandler, wndControl, eMouseButton )
 	self:ShowTab(1);
 end
@@ -470,7 +512,7 @@ function SmartTelegraphs:ShowTab(nTab)
 			
 	self.main.listArea:Show(nTab == 1 or nTab == 2, true)
 	self.main.colorConfigArea:Show(nTab == 1, true)
-	self.wndColorPicker:Show(nTab == 1, true)
+	self.wndColorPicker:Show(nTab == 1 or nTab == 3, true)
 	self.main.colorTab:SetCheck(nTab == 1)
 	self.main.zoneConfigArea:Show(nTab == 2, true)
 	self.main.zoneTab:SetCheck(nTab == 2)
@@ -485,7 +527,7 @@ function SmartTelegraphs:ShowTab(nTab)
 		self:UpdateZoneConfigArea()
 		self:UpdateZoneList()
 	elseif nTab == 3 then
-		
+		self:UpdateSettingsArea()
 	end
 
 	self.config.lastTab = nTab
@@ -528,14 +570,20 @@ end
 -- SmartTelegraphsColorPicker Functions
 ---------------------------------------------------------------------------------------------------
 
+function SmartTelegraphs:UpdateColorDisplays(color)
+	self.main.colorDisplay:SetBGColor(color)
+	self.main.defaultColorDisplay:SetBGColor(color)
+end
+
 function SmartTelegraphs:OnColorChanged( wndHandler, wndControl, crNewColor )
 	self.colorPick.REditBox:SetText(math.floor(crNewColor.r * 255.0))
 	self.colorPick.GEditBox:SetText(math.floor(crNewColor.g * 255.0))
 	self.colorPick.BEditBox:SetText(math.floor(crNewColor.b * 255.0))
 	
 	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
+	local color = ApolloColor.new(crNewColor.r, crNewColor.g, crNewColor.b, fo)
 	
-	self.main.colorDisplay:SetBGColor(ApolloColor.new(crNewColor.r, crNewColor.g, crNewColor.b, fo))
+	self:UpdateColorDisplays(color)
 end
 
 -- TODO should probably do a wrapper function for getting color from ui
@@ -557,8 +605,10 @@ function SmartTelegraphs:OnColorEditBoxChanged( wndHandler, wndControl, strText 
 	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
 	local of = tonumber(self.colorPick.OFEditBox:GetText()) / 100.0
 	
-	self.main.colorDisplay:SetBGColor(ApolloColor.new(r, g, b, fo))
+	local color = ApolloColor.new(r, g, b, fo)
+	
 	self.colorPick.ColorPicker:SetColor(ApolloColor.new(r, g, b))
+	self:UpdateColorDisplays(color)
 end
 
 function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strText )
@@ -579,8 +629,10 @@ function SmartTelegraphs:OnOpacityEditBoxChanged( wndHandler, wndControl, strTex
 	local fo = tonumber(self.colorPick.IFEditBox:GetText()) / 100.0
 	local of = tonumber(self.colorPick.OFEditBox:GetText()) / 100.0
 	
-	self.main.colorDisplay:SetBGColor(ApolloColor.new(r, g, b, fo))
+	local color = ApolloColor.new(r, g, b, fo)
+	
 	self.colorPick.ColorPicker:SetColor(ApolloColor.new(r, g, b))
+	self:UpdateColorDisplays(color)
 end
 
 
