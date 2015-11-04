@@ -10,11 +10,12 @@ require "Window"
 -- SmartTelegraphs Module Definition
 -----------------------------------------------------------------------------------------------
 local SmartTelegraphs = {}
-local SmartTelegraphsVersion = {
-		major = 0,
-  		minor = 5,
-  		patch = 5
-	}
+
+SmartTelegraph.version = {
+				major = 0,
+				minor = 5,
+				patch = 5
+			}
 -----------------------------------------------------------------------------------------------
 -- Constants
 -----------------------------------------------------------------------------------------------
@@ -132,9 +133,9 @@ function SmartTelegraphs:OnDocLoaded()
 
 		self.main.title = self.wndMain:FindChild("SmartTelegraphsTitle")
 		self.main.title:SetText(self.main.title:GetText() .. 
-								" v" .. SmartTelegraphsVersion.major .. 
-								"." .. SmartTelegraphsVersion.minor .. 
-								"." .. SmartTelegraphsVersion.patch)
+								" v" .. SmartTelegraphs.version.major .. 
+								"." .. SmartTelegraphs.version.minor .. 
+								"." .. SmartTelegraphs.version.patch)
 		
 		self.main.zoneConfigArea = self.wndMain:FindChild("ZoneConfigArea")
 		self.main.zoneTab = self.wndMain:FindChild("btnZoneTab")
